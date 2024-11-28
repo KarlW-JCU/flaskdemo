@@ -13,7 +13,13 @@ def home():
 
 @app.route('/about')
 def about():
-    return "I am still working on this"
+    return render_template("about.html")
+
+
+@app.route('/secret')
+def secret():
+    text = " ".join(["Hello Lindsay "] * 999)
+    return render_template("secret.html", text=text)
 
 
 @app.route('/search', methods=['POST', 'GET'])
@@ -28,24 +34,18 @@ def search():
 def results():
     search_term = session['search_term']
     page = get_page(search_term)
+    if type(page) == str:
+        return render_template(page)
     return render_template("results.html", page=page)
 
 
 def get_page(search_term):
     try:
-        page = wikipedia.page(search_term)
+        page = wikipedia.page(search_term, auto_suggest=False)
     except wikipedia.exceptions.PageError:
-        # no such page, return a random one
-        page = wikipedia.page(wikipedia.random())
+        page = "no_results.html"
     except wikipedia.exceptions.DisambiguationError:
-        # this is a disambiguation page, get the first real page (close enough)
-        page_titles = wikipedia.search(search_term)
-        # sometimes the next page has the same name (different caps), so don't try the same again
-        if page_titles[1].lower() == page_titles[0].lower():
-            title = page_titles[2]
-        else:
-            title = page_titles[1]
-        page = get_page(wikipedia.page(title))
+        page = "too_many_results.html"
     return page
 
 
